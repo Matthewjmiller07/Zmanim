@@ -254,22 +254,24 @@ function displayResults(zmanimData, cities, startDate, endDate) {
 function createChart(zmanimData, cities, startDate, endDate, selectedZmanim) {
     const series = [];
 
-    cities.forEach((city, cityIndex) => {
-        selectedZmanim.forEach(zman => {
+    selectedZmanim.forEach(zman => {
+        cities.forEach((city, cityIndex) => {
             const data = [];
             const cityData = zmanimData[cityIndex];
             if (cityData.times[zman]) {
                 Object.entries(cityData.times[zman]).forEach(([date, time]) => {
                     if (time) {
-                        const parsedDate = new Date(time);
-                        data.push([parsedDate.getTime(), parsedDate.getHours() + parsedDate.getMinutes() / 60]);
+                        const parsedDate = new Date(date + 'T00:00:00'); // Parse the date only
+                        const zmanTime = new Date(time);
+                        const timeInHours = zmanTime.getHours() + zmanTime.getMinutes() / 60;
+                        data.push([parsedDate.getTime(), timeInHours]);
                     }
                 });
             }
 
             series.push({
-                name: `${city} - ${formatZmanName(zman)}`,
-                data: data
+                name: `${formatZmanName(zman)} - ${city}`,
+                data: data.sort((a, b) => a[0] - b[0]) // Ensure data is sorted by date
             });
         });
     });
@@ -287,6 +289,9 @@ function createChart(zmanimData, cities, startDate, endDate, selectedZmanim) {
             type: 'datetime',
             title: {
                 text: 'Date'
+            },
+            labels: {
+                format: 'yyyy-MM-dd' // Show date on the x-axis
             }
         },
         yaxis: {
@@ -307,7 +312,7 @@ function createChart(zmanimData, cities, startDate, endDate, selectedZmanim) {
         },
         tooltip: {
             x: {
-                format: 'yyyy-MM-dd HH:mm'
+                format: 'yyyy-MM-dd' // Show full date in tooltip
             },
             y: {
                 formatter: function(value) {
